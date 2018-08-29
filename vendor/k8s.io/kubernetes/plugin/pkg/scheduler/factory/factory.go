@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types" 
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
@@ -221,7 +221,7 @@ func NewConfigFactory(
 					if c.skipPodUpdate(pod) {
 						return
 					}
-					if err := c.podQueue.Update(pod); err != nil {
+					if err := c.podQueue.Update(oldObj.(*v1.Pod), pod); err != nil {
 						runtime.HandleError(fmt.Errorf("unable to update %T: %v", newObj, err))
 					}
 				},
