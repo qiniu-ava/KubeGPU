@@ -537,7 +537,7 @@ func getSubnetIDForLB(compute *gophercloud.ServiceClient, node v1.Node) (string,
 	for _, intf := range interfaces {
 		for _, fixedIP := range intf.FixedIPs {
 			if fixedIP.IPAddress == ipAddress {
-				return intf.NetID, nil
+				return fixedIP.SubnetID, nil
 			}
 		}
 	}
@@ -551,7 +551,7 @@ func getNodeSecurityGroupIDForLB(compute *gophercloud.ServiceClient, nodes []*v1
 
 	for _, node := range nodes {
 		nodeName := types.NodeName(node.Name)
-		srv, err := getServerByName(compute, nodeName)
+		srv, err := getServerByName(compute, nodeName, true)
 		if err != nil {
 			return nodeSecurityGroupIDs.List(), err
 		}
@@ -891,7 +891,7 @@ func (lbaas *LbaasV2) EnsureLoadBalancer(clusterName string, apiService *v1.Serv
 	}
 
 	portID := loadbalancer.VipPortID
-	floatIP, err := getFloatingIPByPortID(lbaas.lb, portID)
+	floatIP, err := getFloatingIPByPortID(lbaas.network, portID)
 	if err != nil && err != ErrNotFound {
 		return nil, fmt.Errorf("error getting floating ip for port %s: %v", portID, err)
 	}
