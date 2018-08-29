@@ -5437,6 +5437,14 @@
 			"revisionTime": "2018-04-17T21:21:07Z"
 		},
 		{
+			"checksumSHA1": "p22V62VGc8rVgXB4jje6gHAlccQ=",
+			"path": "k8s.io/kubernetes/pkg/client/metrics/prometheus",
+			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
+			"revisionTime": "2018-04-17T21:21:07Z",
+			"version": "=v1.9.7",
+			"versionExact": "v1.9.7"
+		},
+		{
 			"checksumSHA1": "0RRln78NRe2PBkJSC2JxQNrxIjc=",
 			"path": "k8s.io/kubernetes/pkg/client/unversioned",
 			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
@@ -6011,6 +6019,14 @@
 			"path": "k8s.io/kubernetes/pkg/kubelet/metrics",
 			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
 			"revisionTime": "2018-04-17T21:21:07Z"
+		},
+		{
+			"checksumSHA1": "V+uTq7pfiPdxnkWTTfO4j3gVwWs=",
+			"path": "k8s.io/kubernetes/pkg/kubelet/metrics/collectors",
+			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
+			"revisionTime": "2018-04-17T21:21:07Z",
+			"version": "=v1.9.7",
+			"versionExact": "v1.9.7"
 		},
 		{
 			"checksumSHA1": "ZO7Ou0Mt1exUvVpMZloNJ9xqJQI=",
@@ -6601,6 +6617,14 @@
 			"revisionTime": "2018-04-17T21:21:07Z"
 		},
 		{
+			"checksumSHA1": "eRmtZc+pGBnjLTQGt71oeCQ3kDc=",
+			"path": "k8s.io/kubernetes/pkg/version/prometheus",
+			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
+			"revisionTime": "2018-04-17T21:21:07Z",
+			"version": "=v1.9.7",
+			"versionExact": "v1.9.7"
+		},
+		{
 			"checksumSHA1": "orQyAiUFGVSixDHe3oHlczqMAwU=",
 			"path": "k8s.io/kubernetes/pkg/version/verflag",
 			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
@@ -6818,7 +6842,6 @@
 		},
 		{
 			"checksumSHA1": "GdK9Dzj1L13ATATeXhkIxz9/eQk=",
-			"origin": "github.com/Microsoft/KubeGPU/vendor/k8s.io/kubernetes/plugin/cmd/kube-scheduler",
 			"path": "k8s.io/kubernetes/plugin/cmd/kube-scheduler",
 			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
 			"revisionTime": "2018-04-17T21:21:07Z"
