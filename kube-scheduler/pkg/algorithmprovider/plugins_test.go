@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/Microsoft/KubeGPU/kube-scheduler/pkg/factory"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 )
 
 var (
@@ -60,6 +61,49 @@ func TestAlgorithmProviders(t *testing.T) {
 			if !factory.IsFitPredicateRegistered(fp) {
 				t.Errorf("fit predicate %s is not registered but is used in the %s algorithm provider", fp, pn)
 			}
+		}
+	}
+}
+
+func TestApplyFeatureGates(t *testing.T) {
+	for _, pn := range algorithmProviderNames {
+		p, err := factory.GetAlgorithmProvider(pn)
+		if err != nil {
+			t.Errorf("Error retrieving '%s' provider: %v", pn, err)
+			break
+		}
+
+		if !p.FitPredicateKeys.Has("CheckNodeCondition") {
+			t.Errorf("Failed to find predicate: 'CheckNodeCondition'")
+			break
+		}
+
+		if !p.FitPredicateKeys.Has("PodToleratesNodeTaints") {
+			t.Errorf("Failed to find predicate: 'PodToleratesNodeTaints'")
+			break
+		}
+	}
+
+	// Apply features for algorithm providers.
+	utilfeature.DefaultFeatureGate.Set("TaintNodesByCondition=True")
+
+	ApplyFeatureGates()
+
+	for _, pn := range algorithmProviderNames {
+		p, err := factory.GetAlgorithmProvider(pn)
+		if err != nil {
+			t.Errorf("Error retrieving '%s' provider: %v", pn, err)
+			break
+		}
+
+		if !p.FitPredicateKeys.Has("PodToleratesNodeTaints") {
+			t.Errorf("Failed to find predicate: 'PodToleratesNodeTaints'")
+			break
+		}
+
+		if p.FitPredicateKeys.Has("CheckNodeCondition") {
+			t.Errorf("Unexpected predicate: 'CheckNodeCondition'")
+			break
 		}
 	}
 }

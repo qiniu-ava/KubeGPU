@@ -17,9 +17,10 @@ limitations under the License.
 package factory
 
 import (
+	"testing"
+
 	"github.com/Microsoft/KubeGPU/kube-scheduler/pkg/algorithm"
 	"github.com/Microsoft/KubeGPU/kube-scheduler/pkg/api"
-	"testing"
 )
 
 func TestAlgorithmNameValidation(t *testing.T) {

@@ -22,9 +22,12 @@ import (
 
 	priorityutil "github.com/Microsoft/KubeGPU/kube-scheduler/pkg/algorithm/priorities/util"
 	"github.com/Microsoft/KubeGPU/kube-scheduler/pkg/schedulercache"
+	schedulertesting "github.com/Microsoft/KubeGPU/kube-scheduler/pkg/testing"
+	apps "k8s.io/api/apps/v1beta1"
+	"k8s.io/api/core/v1"
+	extensions "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 func TestPriorityMetadata(t *testing.T) {
@@ -85,13 +88,31 @@ func TestPriorityMetadata(t *testing.T) {
 					ImagePullPolicy: "Always",
 					Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{
-							"cpu":    resource.MustParse("200m"),
-							"memory": resource.MustParse("2000"),
+							v1.ResourceCPU:    resource.MustParse("200m"),
+							v1.ResourceMemory: resource.MustParse("2000"),
 						},
 					},
 				},
 			},
 			Tolerations: tolerations,
+		},
+	}
+	podWithAffinityAndRequests := &v1.Pod{
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:            "container",
+					Image:           "image",
+					ImagePullPolicy: "Always",
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							v1.ResourceCPU:    resource.MustParse("200m"),
+							v1.ResourceMemory: resource.MustParse("2000"),
+						},
+					},
+				},
+			},
+			Affinity: podAffinity,
 		},
 	}
 	tests := []struct {
@@ -122,9 +143,23 @@ func TestPriorityMetadata(t *testing.T) {
 			},
 			test: "Produce a priorityMetadata with specified requests",
 		},
+		{
+			pod: podWithAffinityAndRequests,
+			expected: &priorityMetadata{
+				nonZeroRequest: specifiedReqs,
+				podTolerations: nil,
+				affinity:       podAffinity,
+			},
+			test: "Produce a priorityMetadata with specified requests",
+		},
 	}
+	mataDataProducer := NewPriorityMetadataFactory(
+		schedulertesting.FakeServiceLister([]*v1.Service{}),
+		schedulertesting.FakeControllerLister([]*v1.ReplicationController{}),
+		schedulertesting.FakeReplicaSetLister([]*extensions.ReplicaSet{}),
+		schedulertesting.FakeStatefulSetLister([]*apps.StatefulSet{}))
 	for _, test := range tests {
-		ptData := PriorityMetadata(test.pod, nil)
+		ptData := mataDataProducer(test.pod, nil)
 		if !reflect.DeepEqual(test.expected, ptData) {
 			t.Errorf("%s: expected %#v, got %#v", test.test, test.expected, ptData)
 		}
