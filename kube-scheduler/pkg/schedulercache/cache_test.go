@@ -25,6 +25,7 @@ import (
 
 	priorityutil "github.com/Microsoft/KubeGPU/kube-scheduler/pkg/algorithm/priorities/util"
 	schedutil "github.com/Microsoft/KubeGPU/kube-scheduler/pkg/util"
+	extypes "github.com/Microsoft/KubeGPU/types"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -64,6 +65,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}{{
 		pods: []*v1.Pod{testPods[0]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -79,6 +81,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}, {
 		pods: []*v1.Pod{testPods[1], testPods[2]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 300,
 				Memory:   1524,
@@ -94,6 +97,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}, { // test non-zero request
 		pods: []*v1.Pod{testPods[3]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 0,
 				Memory:   0,
@@ -109,6 +113,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}, {
 		pods: []*v1.Pod{testPods[4]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU:        100,
 				Memory:          500,
@@ -125,6 +130,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}, {
 		pods: []*v1.Pod{testPods[4], testPods[5]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU:        300,
 				Memory:          1524,
@@ -141,6 +147,7 @@ func TestAssumePodScheduled(t *testing.T) {
 	}, {
 		pods: []*v1.Pod{testPods[6]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -217,6 +224,7 @@ func TestExpirePod(t *testing.T) {
 		},
 		cleanupTime: now.Add(2 * ttl),
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 200,
 				Memory:   1024,
@@ -266,6 +274,7 @@ func TestAddPodWillConfirm(t *testing.T) {
 		podsToAssume: []*v1.Pod{testPods[0], testPods[1]},
 		podsToAdd:    []*v1.Pod{testPods[0]},
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -321,6 +330,7 @@ func TestAddPodWillReplaceAssumed(t *testing.T) {
 		wNodeInfo: map[string]*NodeInfo{
 			"assumed-node": nil,
 			"actual-node": {
+				nodeEx: extypes.NewNodeInfo(),
 				requestedResource: &Resource{
 					MilliCPU: 200,
 					Memory:   500,
@@ -373,6 +383,7 @@ func TestAddPodAfterExpiration(t *testing.T) {
 	}{{
 		pod: basePod,
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -426,6 +437,7 @@ func TestUpdatePod(t *testing.T) {
 		podsToAdd:    []*v1.Pod{testPods[0]},
 		podsToUpdate: []*v1.Pod{testPods[0], testPods[1], testPods[0]},
 		wNodeInfo: []*NodeInfo{{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 200,
 				Memory:   1024,
@@ -438,6 +450,7 @@ func TestUpdatePod(t *testing.T) {
 			pods:                []*v1.Pod{testPods[1]},
 			usedPorts:           map[string]bool{"TCP/127.0.0.1/8080": true},
 		}, {
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -493,6 +506,7 @@ func TestExpireAddUpdatePod(t *testing.T) {
 		podsToAdd:    []*v1.Pod{testPods[0]},
 		podsToUpdate: []*v1.Pod{testPods[0], testPods[1], testPods[0]},
 		wNodeInfo: []*NodeInfo{{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 200,
 				Memory:   1024,
@@ -505,6 +519,7 @@ func TestExpireAddUpdatePod(t *testing.T) {
 			pods:                []*v1.Pod{testPods[1]},
 			usedPorts:           map[string]bool{"TCP/127.0.0.1/8080": true},
 		}, {
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,
@@ -559,6 +574,7 @@ func TestRemovePod(t *testing.T) {
 	}{{
 		pod: basePod,
 		wNodeInfo: &NodeInfo{
+			nodeEx: extypes.NewNodeInfo(),
 			requestedResource: &Resource{
 				MilliCPU: 100,
 				Memory:   500,

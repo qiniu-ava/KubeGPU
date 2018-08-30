@@ -37,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/wait"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	"k8s.io/client-go/kubernetes/fake"
 	clientcache "k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
@@ -200,6 +201,7 @@ func TestScheduler(t *testing.T) {
 					return item.injectBindError
 				}},
 				PodConditionUpdater: fakePodConditionUpdater{},
+				Client:              fake.NewSimpleClientset(item.sendPod),
 				Error: func(p *v1.Pod, err error) {
 					gotPod = p
 					gotError = err
@@ -283,6 +285,7 @@ func TestSchedulerNoPhantomPodAfterExpire(t *testing.T) {
 	// We use conflicted pod ports to incur fit predicate failure if first pod not removed.
 	secondPod := podWithPort("bar", "", 8080)
 	queuedPodStore.Add(secondPod)
+	scheduler.config.Client.CoreV1().Pods("").Create(secondPod)
 	scheduler.scheduleOne()
 	select {
 	case b := <-bindingChan:
@@ -315,6 +318,9 @@ func TestSchedulerNoPhantomPodAfterDelete(t *testing.T) {
 	queuedPodStore.Add(secondPod)
 	// queuedPodStore: [bar:8080]
 	// cache: [(assumed)foo:8080]
+
+	scheduler.config.Client.CoreV1().Pods("").Create(firstPod)
+	scheduler.config.Client.CoreV1().Pods("").Create(secondPod)
 
 	scheduler.scheduleOne()
 	select {
@@ -398,6 +404,8 @@ func TestSchedulerErrorWithLongBinding(t *testing.T) {
 		scheduler.Run()
 		queuedPodStore.Add(firstPod)
 		queuedPodStore.Add(conflictPod)
+		scheduler.config.Client.CoreV1().Pods("").Create(firstPod)
+		scheduler.config.Client.CoreV1().Pods("").Create(conflictPod)
 
 		resultBindings := map[string]bool{}
 		waitChan := time.After(5 * time.Second)
@@ -424,6 +432,7 @@ func setupTestSchedulerWithOnePodOnNode(t *testing.T, queuedPodStore *clientcach
 	nodeLister schedulertesting.FakeNodeLister, predicateMap map[string]algorithm.FitPredicate, pod *v1.Pod, node *v1.Node) (*Scheduler, chan *v1.Binding, chan error) {
 
 	scheduler, bindingChan, errChan := setupTestScheduler(queuedPodStore, scache, nodeLister, predicateMap, nil)
+	scheduler.config.Client.CoreV1().Pods("").Create(pod)
 
 	queuedPodStore.Add(pod)
 	// queuedPodStore: [foo:8080]
@@ -553,6 +562,7 @@ func setupTestScheduler(queuedPodStore *clientcache.FIFO, scache schedulercache.
 			Recorder:            &record.FakeRecorder{},
 			PodConditionUpdater: fakePodConditionUpdater{},
 			PodPreemptor:        fakePodPreemptor{},
+			Client:              fake.NewSimpleClientset(),
 		},
 	}
 
@@ -600,6 +610,7 @@ func setupTestSchedulerLongBindingWithRetry(queuedPodStore *clientcache.FIFO, sc
 			PodConditionUpdater: fakePodConditionUpdater{},
 			PodPreemptor:        fakePodPreemptor{},
 			StopEverything:      stop,
+			Client:              fake.NewSimpleClientset(),
 		},
 	}
 
@@ -752,6 +763,9 @@ func TestSchedulerWithVolumeBinding(t *testing.T) {
 			t.Fatalf("Failed to get fake volume binder")
 		}
 		s, bindingChan, errChan := setupTestSchedulerWithVolumeBinding(fakeVolumeBinder, stop, eventBroadcaster)
+		if item.expectPodBind != nil {
+			s.config.Client.CoreV1().Pods("").Create(&v1.Pod{TypeMeta: item.expectPodBind.TypeMeta, ObjectMeta: item.expectPodBind.ObjectMeta})
+		}
 
 		eventChan := make(chan struct{})
 		events := eventBroadcaster.StartEventWatcher(func(e *v1.Event) {
