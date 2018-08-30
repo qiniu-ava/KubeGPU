@@ -23,8 +23,8 @@ import (
 
 	schedulerapi "github.com/Microsoft/KubeGPU/kube-scheduler/pkg/api"
 	"github.com/Microsoft/KubeGPU/kube-scheduler/pkg/schedulercache"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 func TestImageLocalityPriority(t *testing.T) {
@@ -154,14 +154,14 @@ func TestImageLocalityPriority(t *testing.T) {
 			// Score: 10 < min score = 0
 			pod:          &v1.Pod{Spec: test_min_max},
 			nodes:        []*v1.Node{makeImageNode("machine1", node_40_140_2000), makeImageNode("machine2", node_250_10)},
-			expectedList: []schedulerapi.HostPriority{{Host: "machine1", Score: 10}, {Host: "machine2", Score: 0}},
+			expectedList: []schedulerapi.HostPriority{{Host: "machine1", Score: schedulerapi.MaxPriority}, {Host: "machine2", Score: 0}},
 			test:         "if exceed limit, use limit",
 		},
 	}
 
 	for _, test := range tests {
 		nodeNameToInfo := schedulercache.CreateNodeNameToInfoMap(test.pods, test.nodes)
-		list, err := priorityFunction(ImageLocalityPriorityMap, nil)(test.pod, nodeNameToInfo, test.nodes)
+		list, err := priorityFunction(ImageLocalityPriorityMap, nil, nil)(test.pod, nodeNameToInfo, test.nodes)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
