@@ -2,6 +2,8 @@ package types
 
 import (
 	"github.com/Microsoft/KubeGPU/types"
+
+	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1alpha"
 )
 
 type Volume struct {
@@ -18,9 +20,9 @@ type Device interface {
 	// UpdateNodeInfo - updates a node info structure by writing capacity, allocatable, used, scorer
 	UpdateNodeInfo(*types.NodeInfo) error
 	// Allocate attempst to allocate the devices
-	// Returns list of (VolumeName, VolumeDriver), and list of Devices to use
+	// Returns list of (VolumeName, VolumeDriver, Envs), and list of Devices to use
 	// Returns an error on failure.
-	Allocate(*types.PodInfo, *types.ContainerInfo) ([]Volume, []string, error)
+	Allocate(*types.PodInfo, *types.ContainerInfo) (*pluginapi.AllocateResponse, error)
 	// GetName returns the name of a device
 	GetName() string
 }
