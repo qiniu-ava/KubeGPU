@@ -136,6 +136,12 @@
 			"revisionTime": "2018-04-17T21:21:07Z"
 		},
 		{
+			"checksumSHA1": "P8FATSSgpe5A17FyPrGpsX95Xw8=",
+			"path": "github.com/NVIDIA/gpu-monitoring-tools/bindings/go/nvml",
+			"revision": "86f2a9fac6c5b597dc494420005144b8ef7ec9fb",
+			"revisionTime": "2018-08-29T22:20:09Z"
+		},
+		{
 			"checksumSHA1": "+C8KTeRFRIr/CHinTDcA7Ii0izk=",
 			"origin": "k8s.io/kubernetes/vendor/github.com/Nvveen/Gotty",
 			"path": "github.com/Nvveen/Gotty",
@@ -5906,6 +5912,12 @@
 			"path": "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1alpha",
 			"revision": "dd5e1a2978fd0b97d9b78e1564398aeea7e7fe92",
 			"revisionTime": "2018-04-17T21:21:07Z"
+		},
+		{
+			"path": "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1",
+			"revision": "=v1.9.3",
+			"version": "=v1.9.3",
+			"versionExact": "v1.9.3"
 		},
 		{
 			"checksumSHA1": "x2N1fSC66C/6ROw5NGTGaUWuNh8=",

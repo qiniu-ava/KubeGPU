@@ -1,8 +1,9 @@
 package nvidia
 
 import (
-	"encoding/json"
+	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -10,8 +11,7 @@ import (
 	gputypes "github.com/Microsoft/KubeGPU/plugins/gpuplugintypes"
 	"github.com/Microsoft/KubeGPU/types"
 	"github.com/golang/glog"
-
-	"strconv"
+	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1alpha"
 )
 
 type memoryInfo struct {
@@ -42,13 +42,8 @@ type gpuInfo struct {
 	Name     string         `json:"-"`
 }
 
-type versionInfo struct {
-	Driver string `json:"Driver"`
-	CUDA   string `json:"CUDA"`
-}
 type gpusInfo struct {
-	Version versionInfo `json:"Version"`
-	Gpus    []gpuInfo   `json:"Devices"`
+	Gpus []gpuInfo `json:"Devices"`
 }
 
 // NvidiaGPUManager manages nvidia gpu devices.
@@ -126,14 +121,35 @@ func (ngm *NvidiaGPUManager) UpdateGPUInfo() error {
 	defer ngm.Unlock()
 
 	np := ngm.np
-	body, err := np.GetGPUInfo()
+	devices, err := np.GetGPUInfo()
 	if err != nil {
 		return err
 	}
 	var gpus gpusInfo
-	if err := json.Unmarshal(body, &gpus); err != nil {
-		return err
+	for _, d := range devices {
+		info := gpuInfo{
+			ID:   d.UUID,
+			Path: d.Path,
+			PCI:  pciInfo{BusID: d.PCI.BusID},
+		}
+		if d.Model != nil {
+			info.Model = *d.Model
+		}
+		if d.Memory != nil {
+			info.Memory = memoryInfo{Global: int64(*d.Memory)}
+		}
+		if d.PCI.Bandwidth != nil {
+			info.PCI.Bandwidth = int64(*d.PCI.Bandwidth)
+		}
+		for _, tp := range d.Topology {
+			info.Topology = append(info.Topology, topologyInfo{
+				BusID: tp.BusID,
+				Link:  int32(tp.Link),
+			})
+		}
+		gpus.Gpus = append(gpus.Gpus, info)
 	}
+
 	// convert certain resources to correct units, such as memory and Bandwidth
 	for i := range gpus.Gpus {
 		gpus.Gpus[i].Memory.Global *= int64(1024) * int64(1024) // in units of MiB
@@ -190,6 +206,7 @@ func (ngm *NvidiaGPUManager) UpdateGPUInfo() error {
 	// link "5, 3"" discovery - put all in higher group
 	ngm.topologyDiscovery([]int32{6, 5, 4, 3, 2, 1}, 1)
 
+	glog.V(5).Infof("updated gpus: %+v", ngm.gpus)
 	return nil
 }
 
@@ -219,63 +236,28 @@ func (ngm *NvidiaGPUManager) UpdateNodeInfo(nodeInfo *types.NodeInfo) error {
 }
 
 // AllocateGPU returns VolumeName, VolumeDriver, and list of Devices to use
-func (ngm *NvidiaGPUManager) Allocate(pod *types.PodInfo, container *types.ContainerInfo) ([]devtypes.Volume, []string, error) {
-	gpuList := []string{}
-	volumeDriver := ""
-	volumeName := ""
+func (ngm *NvidiaGPUManager) Allocate(pod *types.PodInfo, container *types.ContainerInfo) (*pluginapi.AllocateResponse, error) {
 	ngm.Lock()
 	defer ngm.Unlock()
-
 	if container.AllocateFrom == nil || 0 == len(container.AllocateFrom) {
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	//re := regexp.MustCompile(types.DeviceGroupPrefix + "/gpu/" + `(.*?)/cards`)
 	re := regexp.MustCompile(types.DeviceGroupPrefix + "/gpugrp1/.*/gpugrp0/.*/gpu/" + `(.*?)/cards`)
-
-	devices := []int{}
+	resp := &pluginapi.AllocateResponse{Envs: make(map[string]string)}
+	var devIDs []string
 	for _, res := range container.AllocateFrom {
 		glog.V(4).Infof("PodName: %v -- searching for device UID: %v", pod.Name, res)
 		matches := re.FindStringSubmatch(string(res))
 		if len(matches) >= 2 {
 			id := matches[1]
-			devices = append(devices, ngm.gpus[id].Index)
-			glog.V(4).Infof("PodName: %v -- device index: %v", pod.Name, ngm.gpus[id].Index)
-			if ngm.gpus[id].Found {
-				gpuList = append(gpuList, ngm.gpus[id].Path)
-				glog.V(3).Infof("PodName: %v -- UID: %v device path: %v", pod.Name, res, ngm.gpus[id].Path)
+			gpu, ok := ngm.gpus[id]
+			if !ok || !gpu.Found {
+				return nil, fmt.Errorf("device %s is not available", id)
 			}
+			devIDs = append(devIDs, id)
 		}
 	}
-	np := ngm.np
-	body, err := np.GetGPUCommandLine(devices)
-	glog.V(3).Infof("PodName: %v Command line from plugin: %v", pod.Name, string(body))
-	if err != nil {
-		return []devtypes.Volume{}, nil, err
-	}
-
-	re = regexp.MustCompile(`(.*?)=(.*)`)
-	//fmt.Println("body:", body)
-	tokens := strings.Split(string(body), " ")
-	//fmt.Println("tokens:", tokens)
-	for _, token := range tokens {
-		matches := re.FindStringSubmatch(token)
-		if len(matches) == 3 {
-			key := matches[1]
-			val := matches[2]
-			//fmt.Printf("Token %v Match key %v Val %v\n", token, key, val)
-			if key == `--device` {
-				_, available := ngm.pathToID[val] // val is path in case of device
-				if !available {
-					gpuList = append(gpuList, val) // for other devices, e.g. /dev/nvidiactl, /dev/nvidia-uvm, /dev/nvidia-uvm-tools
-				}
-			} else if key == `--volume-driver` {
-				volumeDriver = val
-			} else if key == `--volume` {
-				volumeName = val
-			}
-		}
-	}
-
-	return []devtypes.Volume{{Name: volumeName, Driver: volumeDriver}}, gpuList, nil
+	resp.Envs["NVIDIA_VISIBLE_DEVICES"] = strings.Join(devIDs, ",")
+	return resp, nil
 }

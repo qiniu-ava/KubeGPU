@@ -1,36 +1,43 @@
 package nvidia
 
 import (
-	"encoding/json"
-
 	"github.com/Microsoft/KubeGPU/crishim/pkg/types"
+	"github.com/NVIDIA/gpu-monitoring-tools/bindings/go/nvml"
 )
 
 type NvidiaFakePlugin struct {
-	volumeDriver string
-	volume       string
-	gInfo        gpusInfo
+	gInfo gpusInfo
 }
 
-func (np *NvidiaFakePlugin) GetGPUInfo() ([]byte, error) {
-	return json.Marshal(&np.gInfo)
-}
-
-func (np *NvidiaFakePlugin) GetGPUCommandLine(devices []int) ([]byte, error) {
-	cliString := "--volume-driver=" + np.volumeDriver + " --volume=" + np.volume
-	cliString += " --device=/dev/nvidiactl --device=/dev/nvidia-uvm --device=/dev/nvidia-uvm-tools"
-	for _, deviceIndex := range devices {
-		cliString += " --device=" + np.gInfo.Gpus[deviceIndex].Path
+func (np *NvidiaFakePlugin) GetGPUInfo() ([]*nvml.Device, error) {
+	var devs []*nvml.Device
+	for _, g := range np.gInfo.Gpus {
+		mem := uint64(g.Memory.Global)
+		bw := uint(g.PCI.Bandwidth)
+		d := &nvml.Device{
+			UUID:   g.ID,
+			Path:   g.Path,
+			Model:  &g.Model,
+			Memory: &mem,
+			PCI: nvml.PCIInfo{
+				BusID:     g.PCI.BusID,
+				Bandwidth: &bw,
+			},
+		}
+		for _, tp := range g.Topology {
+			d.Topology = append(d.Topology, nvml.P2PLink{
+				BusID: tp.BusID,
+				Link:  nvml.P2PLinkType(tp.Link),
+			})
+		}
+		devs = append(devs, d)
 	}
-	//fmt.Println("CLI String: ", cliString)
-	return []byte(cliString), nil
+	return devs, nil
 }
 
-func NewFakeNvidiaGPUManager(info *gpusInfo, volume string, volumeDriver string) (types.Device, error) {
+func NewFakeNvidiaGPUManager(info *gpusInfo) (types.Device, error) {
 	plugin := &NvidiaFakePlugin{
-		gInfo:        *info,
-		volume:       volume,
-		volumeDriver: volumeDriver,
+		gInfo: *info,
 	}
 	return &NvidiaGPUManager{
 		gpus: make(map[string]gpuInfo),

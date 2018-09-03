@@ -7,6 +7,7 @@ import (
 	devtypes "github.com/Microsoft/KubeGPU/crishim/pkg/types"
 	"github.com/Microsoft/KubeGPU/types"
 	"github.com/golang/glog"
+	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1alpha"
 )
 
 // DeviceManager manages multiple devices
@@ -101,22 +102,21 @@ func (d *DevicesManager) UpdateNodeInfo(info *types.NodeInfo) {
 }
 
 // AllocateDevices allocates devices using device manager interface
-func (d *DevicesManager) AllocateDevices(pod *types.PodInfo, cont *types.ContainerInfo) ([]devtypes.Volume, []string, error) {
-	volumes := []devtypes.Volume{}
-	devices := []string{}
+func (d *DevicesManager) AllocateDevices(pod *types.PodInfo, cont *types.ContainerInfo) (*pluginapi.AllocateResponse, error) {
+	resp := &pluginapi.AllocateResponse{Envs: make(map[string]string)}
 	var errRet error
-	errRet = nil
 	for i, device := range d.Devices {
 		if d.Operational[i] {
-			volumeD, deviceD, err := device.Allocate(pod, cont)
+			alloc, err := device.Allocate(pod, cont)
 			if err == nil {
-				// appending nil to nil is okay
-				volumes = append(volumes, volumeD...)
-				devices = append(devices, deviceD...)
+				// only set envs for now
+				for k, v := range alloc.Envs {
+					resp.Envs[k] = v
+				}
 			} else {
 				errRet = err
 			}
 		}
 	}
-	return volumes, devices, errRet
+	return resp, errRet
 }

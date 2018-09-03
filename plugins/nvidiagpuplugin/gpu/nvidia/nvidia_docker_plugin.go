@@ -1,27 +1,26 @@
 package nvidia
 
 import (
-	"io/ioutil"
-	"net/http"
+	"github.com/NVIDIA/gpu-monitoring-tools/bindings/go/nvml"
 )
-
-func getResponse(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	return body, err
-}
 
 type NvidiaDockerPlugin struct {
 }
 
-func (ndp *NvidiaDockerPlugin) GetGPUInfo() ([]byte, error) {
-	return getResponse("http://localhost:3476/v1.0/gpu/info/json")
-}
+func (ndp *NvidiaDockerPlugin) GetGPUInfo() ([]*nvml.Device, error) {
+	n, err := nvml.GetDeviceCount()
+	if err != nil {
+		return nil, err
+	}
 
-func (ndp *NvidiaDockerPlugin) GetGPUCommandLine(devices []int) ([]byte, error) {
-	return getResponse("http://localhost:3476/v1.0/docker/cli?dev=" + deviceIndexToString(devices))
+	var devs []*nvml.Device
+	for i := uint(0); i < n; i++ {
+		d, err := nvml.NewDeviceLite(i)
+		if err != nil {
+			return nil, err
+		}
+		devs = append(devs, d)
+	}
+
+	return devs, nil
 }

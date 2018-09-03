@@ -2,6 +2,7 @@ package nvidia
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	devtypes "github.com/Microsoft/KubeGPU/crishim/pkg/types"
@@ -14,9 +15,6 @@ import (
 const (
 	jsonString  = `{"Version":{"Driver":"375.20","CUDA":"8.0"},"Devices":[{"UUID":"GPU00","Path":"/dev/nvidia0","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":0,"PCI":{"BusID":"0000:04:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:05:00.0","Link":5},{"BusID":"0000:08:00.0","Link":3},{"BusID":"0000:09:00.0","Link":3}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU01","Path":"/dev/nvidia1","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":0,"PCI":{"BusID":"0000:05:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:04:00.0","Link":5},{"BusID":"0000:08:00.0","Link":3},{"BusID":"0000:09:00.0","Link":3}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU02","Path":"/dev/nvidia2","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":0,"PCI":{"BusID":"0000:08:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:04:00.0","Link":3},{"BusID":"0000:05:00.0","Link":3},{"BusID":"0000:09:00.0","Link":5}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU03","Path":"/dev/nvidia3","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":0,"PCI":{"BusID":"0000:09:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:04:00.0","Link":3},{"BusID":"0000:05:00.0","Link":3},{"BusID":"0000:08:00.0","Link":5}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU04","Path":"/dev/nvidia4","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":1,"PCI":{"BusID":"0000:85:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:86:00.0","Link":5},{"BusID":"0000:89:00.0","Link":3},{"BusID":"0000:8A:00.0","Link":3}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU05","Path":"/dev/nvidia5","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":1,"PCI":{"BusID":"0000:86:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:85:00.0","Link":5},{"BusID":"0000:89:00.0","Link":3},{"BusID":"0000:8A:00.0","Link":3}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU06","Path":"/dev/nvidia6","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":1,"PCI":{"BusID":"0000:89:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:85:00.0","Link":3},{"BusID":"0000:86:00.0","Link":3},{"BusID":"0000:8A:00.0","Link":5}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}},{"UUID":"GPU07","Path":"/dev/nvidia7","Model":"GeForce GTX TITAN X","Power":250,"CPUAffinity":1,"PCI":{"BusID":"0000:8A:00.0","BAR1":256,"Bandwidth":15760},"Clocks":{"Cores":1392,"Memory":3505},"Topology":[{"BusID":"0000:85:00.0","Link":3},{"BusID":"0000:86:00.0","Link":3},{"BusID":"0000:89:00.0","Link":5}],"Family":"Maxwell","Arch":"5.2","Cores":3072,"Memory":{"ECC":false,"Global":12238,"Shared":96,"Constant":64,"L2Cache":3072,"Bandwidth":336480}}]}`
 	jsonString2 = `{"Version":{"Driver":"384.111","CUDA":"9.0"},"Devices":[{"UUID":"GPU01","Path":"/dev/nvidia0","Model":"Tesla K80","Power":149,"CPUAffinity":0,"PCI":{"BusID":"777C:00:00.0","BAR1":16384,"Bandwidth":15760},"Clocks":{"Cores":875,"Memory":2505},"Topology":null,"Family":"Kepler","Arch":"3.7","Cores":2496,"Memory":{"ECC":true,"Global":11439,"Shared":112,"Constant":64,"L2Cache":1536,"Bandwidth":240480}},{"UUID":"GPU-dc6182bb-4760-894c-e144-592b0acd7657","Path":"/dev/nvidia1","Model":"Tesla K80","Power":149,"CPUAffinity":0,"PCI":{"BusID":"9710:00:00.0","BAR1":16384,"Bandwidth":15760},"Clocks":{"Cores":875,"Memory":2505},"Topology":null,"Family":"Kepler","Arch":"3.7","Cores":2496,"Memory":{"ECC":true,"Global":11439,"Shared":112,"Constant":64,"L2Cache":1536,"Bandwidth":240480}},{"UUID":"GPU-9f0b1fcf-222f-0701-a230-ad08406c0104","Path":"/dev/nvidia2","Model":"Tesla K80","Power":149,"CPUAffinity":0,"PCI":{"BusID":"B29F:00:00.0","BAR1":16384,"Bandwidth":15760},"Clocks":{"Cores":875,"Memory":2505},"Topology":null,"Family":"Kepler","Arch":"3.7","Cores":2496,"Memory":{"ECC":true,"Global":11439,"Shared":112,"Constant":64,"L2Cache":1536,"Bandwidth":240480}},{"UUID":"GPU-aa4a86d4-3e1b-f48d-a69f-6aadd5f94466","Path":"/dev/nvidia3","Model":"Tesla K80","Power":149,"CPUAffinity":0,"PCI":{"BusID":"CF72:00:00.0","BAR1":16384,"Bandwidth":15760},"Clocks":{"Cores":875,"Memory":2505},"Topology":null,"Family":"Kepler","Arch":"3.7","Cores":2496,"Memory":{"ECC":true,"Global":11439,"Shared":112,"Constant":64,"L2Cache":1536,"Bandwidth":240480}}]}`
-
-	volumeDriver = "nvidia-docker"
-	volumeName   = "nvidia_driver_375.20:/usr/local/nvidia:ro"
 )
 
 func assertMapEqual(t *testing.T, cap types.ResourceList, capExpected map[string]int64) {
@@ -74,26 +72,18 @@ func checkElemEqual(t *testing.T, a1 []string, a2 []string) {
 func testAlloc(t *testing.T, ngm devtypes.Device, info *gpusInfo, alloc map[int]int) {
 	container := types.ContainerInfo{}
 	container.AllocateFrom = make(types.ResourceLocation)
+	var devIDs []string
 	for from, to := range alloc {
 		setAllocFrom(info, container.AllocateFrom, from, to)
+		devIDs = append(devIDs, info.Gpus[to].ID)
 	}
 	pod := types.PodInfo{}
 	pod.Name = "TestPod"
-	volumesGet, devicesGet, err := ngm.Allocate(&pod, &container)
+	resp, err := ngm.Allocate(&pod, &container)
 	if err != nil {
 		t.Errorf("Got error %v", err)
 	}
-	if volumesGet[0].Name != volumeName {
-		t.Errorf("Volume name incorrect - expected %v - got %v", volumeName, volumesGet[0].Name)
-	}
-	if volumesGet[0].Driver != volumeDriver {
-		t.Errorf("Volume driver incorrect - expected %v - got %v", volumeDriver, volumesGet[0].Driver)
-	}
-	devices := []string{"/dev/nvidiactl", "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools"}
-	for _, to := range alloc {
-		devices = append(devices, info.Gpus[to].Path)
-	}
-	checkElemEqual(t, devices, devicesGet)
+	checkElemEqual(t, devIDs, strings.Split(resp.Envs["NVIDIA_VISIBLE_DEVICES"], ","))
 }
 
 func TestAlloc(t *testing.T) {
@@ -103,7 +93,7 @@ func TestAlloc(t *testing.T) {
 		t.Errorf("Got error %v", err)
 	}
 	//fmt.Println("gpusInfo", info)
-	ngm, err := NewFakeNvidiaGPUManager(&info, volumeName, volumeDriver)
+	ngm, err := NewFakeNvidiaGPUManager(&info)
 	if err != nil {
 		t.Errorf("Got error %v", err)
 	}
@@ -131,7 +121,7 @@ func TestAlloc(t *testing.T) {
 	info = gpusInfo{}
 	err = json.Unmarshal([]byte(jsonString2), &info)
 	nodeInfo = types.NewNodeInfo()
-	ngm, err = NewFakeNvidiaGPUManager(&info, volumeName, volumeDriver)
+	ngm, err = NewFakeNvidiaGPUManager(&info)
 	ngm.UpdateNodeInfo(nodeInfo)
 	cap = nodeInfo.Capacity
 	capExpected = make(map[string]int64)

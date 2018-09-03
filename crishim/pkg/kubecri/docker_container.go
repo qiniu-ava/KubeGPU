@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/Microsoft/KubeGPU/crishim/pkg/device"
 	"github.com/Microsoft/KubeGPU/crishim/pkg/kubeadvertise"
@@ -35,41 +35,37 @@ type dockerExtService struct {
 }
 
 func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types.ContainerInfo, config *runtimeapi.ContainerConfig) error {
+	glog.V(3).Infof("original container config: %s", config.String())
+
 	numAllocateFrom := len(cont.AllocateFrom) // may be zero from old scheduler
-	nvidiaFullpathRE := regexp.MustCompile(`^/dev/nvidia[0-9]*$`)
-	var newDevices []*runtimeapi.Device
-	// first remove any existing nvidia devices
-	numRequestedGPU := 0
-	for _, oldDevice := range config.Devices {
-		isNvidiaDevice := false
-		if oldDevice.HostPath == "/dev/nvidiactl" ||
-			oldDevice.HostPath == "/dev/nvidia-uvm" ||
-			oldDevice.HostPath == "/dev/nvidia-uvm-tools" {
-			isNvidiaDevice = true
-		}
-		if nvidiaFullpathRE.MatchString(oldDevice.HostPath) {
-			isNvidiaDevice = true
-			numRequestedGPU++
-		}
-		if !isNvidiaDevice || 0 == numAllocateFrom {
-			newDevices = append(newDevices, oldDevice)
+	var visDev *string
+	// https://github.com/NVIDIA/nvidia-container-runtime#nvidia_visible_devices
+	for _, v := range config.Envs {
+		if v.Key == "NVIDIA_VISIBLE_DEVICES" {
+			switch v.Value {
+			case "void", "none", "all":
+				return nil
+			default:
+				visDev = &v.Value
+			}
+			break
 		}
 	}
+	if visDev == nil {
+		return nil
+	}
+
+	numRequestedGPU := len(strings.Split(*visDev, ","))
 	if (numAllocateFrom > 0) && (numRequestedGPU > 0) && (numAllocateFrom != numRequestedGPU) {
-		return fmt.Errorf("Number of AllocateFrom is different than number of requested GPUs")
+		return fmt.Errorf("Number of AllocateFrom (%d) is different than number of requested GPUs (%d)", numAllocateFrom, numRequestedGPU)
 	}
-	glog.V(3).Infof("Modified devices: %v", newDevices)
-	// allocate devices for container
-	_, devices, err := d.devmgr.AllocateDevices(pod, cont)
+	resp, err := d.devmgr.AllocateDevices(pod, cont)
 	if err != nil {
 		return err
 	}
-	glog.V(3).Infof("New devices to add: %v", devices)
-	// now add devices returned -- skip volumes for now
-	for _, device := range devices {
-		newDevices = append(newDevices, &runtimeapi.Device{HostPath: device, ContainerPath: device, Permissions: "mrw"})
-	}
-	config.Devices = newDevices
+	// update actual allocated devs from devmgr
+	*visDev = resp.Envs["NVIDIA_VISIBLE_DEVICES"]
+	glog.V(3).Infof("updated container config: %s", config.String())
 	return nil
 }
 
@@ -79,9 +75,9 @@ func (d *dockerExtService) CreateContainer(podSandboxID string, config *runtimea
 	podName := config.Labels[kubelettypes.KubernetesPodNameLabel]
 	podNameSpace := config.Labels[kubelettypes.KubernetesPodNamespaceLabel]
 	containerName := config.Labels[kubelettypes.KubernetesContainerNameLabel]
-	glog.V(3).Infof("Creating container for pod %v container %v", podName, containerName)
+	glog.V(3).Infof("Creating container for pod %s/%v container %v", podNameSpace, podName, containerName)
 	opts := metav1.GetOptions{}
-	pod, err := d.kubeclient.Core().Pods(podNameSpace).Get(podName, opts)
+	pod, err := d.kubeclient.CoreV1().Pods(podNameSpace).Get(podName, opts)
 	if err != nil {
 		glog.Errorf("Retrieving pod %v gives error %v", podName, err)
 	}
