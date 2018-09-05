@@ -24,7 +24,7 @@ func (ndp *NvidiaDockerPlugin) GetGPUInfo() ([]*nvml.Device, error) {
 
 	// NewDevice won't get topology info, generate by GetP2PLink
 	if err := genTopology(devs); err != nil {
-		return nil, e
+		return nil, err
 	}
 	return devs, nil
 }
