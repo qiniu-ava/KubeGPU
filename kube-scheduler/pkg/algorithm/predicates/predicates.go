@@ -513,7 +513,7 @@ func (c *VolumeZoneChecker) predicate(pod *v1.Pod, meta algorithm.PredicateMetad
 						class, _ := c.classInfo.GetStorageClassInfo(*scName)
 						if class != nil {
 							if class.VolumeBindingMode == nil {
-								return false, nil, fmt.Errorf("VolumeBindingMode not set for StorageClass %q", scName)
+								return false, nil, fmt.Errorf("VolumeBindingMode not set for StorageClass %q", *scName)
 							}
 							if *class.VolumeBindingMode == storagev1.VolumeBindingWaitForFirstConsumer {
 								// Skip unbound volumes

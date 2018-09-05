@@ -3,3 +3,7 @@ go:
     - "1.11"
 install:
     - mv $GOPATH/src/github.com/qiniu-ava $GOPATH/src/github.com/Microsoft
+script:
+    - make
+    - go test ./...
+
