@@ -117,7 +117,7 @@ nvmlReturn_t (*nvmlDeviceGetSamplesFunc)(nvmlDevice_t device, nvmlSamplingType_t
 // Loads all symbols needed and initializes NVML.
 // Call this before calling any other methods.
 nvmlReturn_t nvmlInit_dl(void) {
-  nvmlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
+  nvmlHandle = dlopen("libnvidia-ml.so.1", RTLD_LAZY | RTLD_GLOBAL);
   if (nvmlHandle == NULL) {
     return NVML_ERROR_LIBRARY_NOT_FOUND;
   }
