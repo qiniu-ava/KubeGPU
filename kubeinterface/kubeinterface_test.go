@@ -160,7 +160,7 @@ func TestConvert(t *testing.T) {
 					Name:  "Run1",
 					Image: "RunBCDE",
 					Resources: kubev1.ResourceRequirements{
-						Requests: kubev1.ResourceList{"CPU": rq(4), "Memory": rq(300000), "alpha.kubernetes.io/nvidia-gpu": rq(2)},
+						Requests: kubev1.ResourceList{"CPU": rq(4), "Memory": rq(300000), "nvidia.com/gpu": rq(2)},
 					},
 				},
 			},
@@ -194,7 +194,7 @@ func TestConvert(t *testing.T) {
 				Scorer:       types.ResourceScorer{},
 			},
 			"Run1": {
-				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 300000, "alpha.kubernetes.io/nvidia-gpu": 2},
+				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 300000, "nvidia.com/gpu": 2},
 				Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
 				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
 				AllocateFrom: types.ResourceLocation{},
