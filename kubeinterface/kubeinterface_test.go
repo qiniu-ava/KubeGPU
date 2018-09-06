@@ -62,6 +62,7 @@ func comparePod(pod0 *types.PodInfo, pod1 *types.PodInfo) {
 	if pod0.NodeName != pod1.NodeName {
 		fmt.Printf("Nodename does not match %s %s\n", pod0.NodeName, pod1.NodeName)
 	}
+
 	compareContainers(pod0.InitContainers, pod1.InitContainers)
 	compareContainers(pod0.RunningContainers, pod1.RunningContainers)
 }
@@ -124,7 +125,7 @@ func TestConvert(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "Pod0",
 			Annotations: map[string]string{
-				"ABCD": "EFGH",
+				"ABCD":                        "EFGH",
 				"pod.alpha/DeviceInformation": string(jsonStr),
 				// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/cards": "1",
 				// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/memory": "100000",
@@ -174,6 +175,7 @@ func TestConvert(t *testing.T) {
 	expectedPodInfo := &types.PodInfo{
 		Name:     "Pod0",
 		NodeName: "",
+		Requests: types.ResourceList{},
 		InitContainers: map[string]types.ContainerInfo{
 			"Init0": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20},
@@ -234,7 +236,7 @@ func TestConvert(t *testing.T) {
 
 	jsonStr, _ = json.Marshal(podInfo)
 	expectedAnnotations := map[string]string{
-		"ABCD": "EFGH", // existing
+		"ABCD":                        "EFGH", // existing
 		"pod.alpha/DeviceInformation": string(jsonStr),
 		// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/cards": "1",
 		// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/memory": "100000",
