@@ -19,7 +19,7 @@ type NvidiaGPUScheduler struct {
 }
 
 func TranslateGPUContainerResources(alloc types.ResourceList, cont types.ContainerInfo) types.ResourceList {
-	numGPUs := cont.Requests[gputypes.ResourceGPU] // get from annotation, don't use default KubeRequests as this must be set to zero
+	numGPUs := cont.Requests[gputypes.NvidiaGPUResource] // get from annotation, don't use default KubeRequests as this must be set to zero
 	return TranslateGPUResources(numGPUs, alloc, cont.DevRequests)
 }
 

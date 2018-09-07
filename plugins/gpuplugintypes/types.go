@@ -4,5 +4,6 @@ import "github.com/Microsoft/KubeGPU/types"
 
 const (
 	// NVIDIA GPU, in devices. Alpha, might change: although fractional and allowing values >1, only one whole device per node is assigned.
-	ResourceGPU types.ResourceName = "alpha.gpu/numgpu"
+	ResourceGPU       types.ResourceName = "alpha.gpu/numgpu"
+	NvidiaGPUResource types.ResourceName = "nvidia.com/gpu"
 )

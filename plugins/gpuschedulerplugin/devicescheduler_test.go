@@ -420,17 +420,17 @@ func TestGrpAllocate1(t *testing.T) {
 	pod, podEx = createPod("pod2", 0.3,
 		[]cont{
 			{name: "Init0",
-				res:            map[string]int64{string(gputypes.ResourceGPU): 1},
+				res:            map[string]int64{string(gputypes.NvidiaGPUResource): 1},
 				expectedGrpLoc: map[string]string{"gpu/0": "gpu/dev4"}}},
 		[]cont{
 			{name: "Run0",
-				res: map[string]int64{string(gputypes.ResourceGPU): 2},
+				res: map[string]int64{string(gputypes.NvidiaGPUResource): 2},
 				expectedGrpLoc: map[string]string{
 					"gpu/0": "gpu/dev4",
 					"gpu/1": "gpu/dev3"},
 			},
 			{name: "Run1",
-				res:            map[string]int64{string(gputypes.ResourceGPU): 1},
+				res:            map[string]int64{string(gputypes.NvidiaGPUResource): 1},
 				expectedGrpLoc: map[string]string{"gpu/0": "gpu/dev2"},
 			},
 		},
