@@ -35,9 +35,13 @@ type dockerExtService struct {
 }
 
 func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types.ContainerInfo, config *runtimeapi.ContainerConfig) error {
+	numAllocateFrom := len(cont.AllocateFrom) // may be zero from old scheduler
+	if numAllocateFrom == 0 {
+		return nil
+	}
+
 	glog.V(3).Infof("original container config: %s", config.String())
 
-	numAllocateFrom := len(cont.AllocateFrom) // may be zero from old scheduler
 	var visDev *string
 	// https://github.com/NVIDIA/nvidia-container-runtime#nvidia_visible_devices
 	for _, v := range config.Envs {

@@ -108,7 +108,7 @@ func (d *DevicesManager) AllocateDevices(pod *types.PodInfo, cont *types.Contain
 	for i, device := range d.Devices {
 		if d.Operational[i] {
 			alloc, err := device.Allocate(pod, cont)
-			if err == nil {
+			if err == nil && alloc != nil {
 				// only set envs for now
 				for k, v := range alloc.Envs {
 					resp.Envs[k] = v
