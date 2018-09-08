@@ -179,8 +179,8 @@ func TestConvert(t *testing.T) {
 		InitContainers: map[string]types.ContainerInfo{
 			"Init0": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
+				Requests:     types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20, "alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
+				DevRequests:  types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20, "alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
 				AllocateFrom: types.ResourceLocation{},
 				Scorer:       types.ResourceScorer{},
 			},
@@ -188,15 +188,15 @@ func TestConvert(t *testing.T) {
 		RunningContainers: map[string]types.ContainerInfo{
 			"Run0": {
 				KubeRequests: types.ResourceList{"CPU": 8, "Memory": 200000},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 4},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/A/cards": 4},
+				Requests:     types.ResourceList{"CPU": 8, "Memory": 200000, "alpha/grpresource/gpu/A/cards": 4},
+				DevRequests:  types.ResourceList{"CPU": 8, "Memory": 200000, "alpha/grpresource/gpu/A/cards": 4},
 				AllocateFrom: types.ResourceLocation{},
 				Scorer:       types.ResourceScorer{},
 			},
 			"Run1": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 300000, "nvidia.com/gpu": 2},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
+				Requests:     types.ResourceList{"CPU": 4, "Memory": 300000, "nvidia.com/gpu": 2, "alpha/grpresource/gpu/A/cards": 6},
+				DevRequests:  types.ResourceList{"CPU": 4, "Memory": 300000, "nvidia.com/gpu": 2, "alpha/grpresource/gpu/A/cards": 6},
 				AllocateFrom: types.ResourceLocation{},
 				Scorer:       types.ResourceScorer{"alpha/grpresource/gpu/A/cards": 10},
 			},

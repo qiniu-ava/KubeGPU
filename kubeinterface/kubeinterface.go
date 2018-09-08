@@ -69,6 +69,7 @@ func addContainersToPodInfo(containers map[string]types.ContainerInfo, conts []k
 		contF := types.FillContainerInfo(&cont)
 		for kr, vr := range c.Resources.Requests {
 			contF.KubeRequests[types.ResourceName(kr)] = vr.Value()
+			contF.Requests[types.ResourceName(kr)] = vr.Value()
 		}
 		containers[c.Name] = *contF
 	}
